@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.body-dashboard {
+  display: flex;
+  margin-top: 3rem;
+  margin-bottom: 3rem;
+  width: 100%;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 1.5rem;
+  &_items {
+    width: 50rem;
+    display: flex;
+    gap: 2rem;
+    justify-content: start;
+    align-items: center;
+    font-weight: 700;
+    font-size: 1.6rem;
+    color: #061b64;
+  }
+}
