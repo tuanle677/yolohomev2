@@ -3,15 +3,13 @@ const app = express();
 const mqtt = require("mqtt");
 const { spawn } = require("child_process");
 
-const AIO_USERNAME = "ntr18";
-const AIO_KEY = "aio_sYBT12frtgJHKgZXbiDN5lKrECht";
-const feedNameLed = "bbc-led";
-const feedNameTemp = "bbc-temp";
-const feedNameFan = "bbc-fan";
-const feedNameHum = "bbc-hum";
-const feedNameHex = "bbc-hex";
-const feedNameRgb = "bbc-rgb";
-const feedNameAss = "bbc-ass";
+const AIO_USERNAME = "dynabit";
+const AIO_KEY = "aio_DpWC444jLZSgFHnuHKIRMiElY3wB";
+const feedName = "topic";
+const feadAtom = "feeds/atom";
+const feadAtom2 = "feeds/atom2";
+const feadAtom3 = "feeds/atom3";
+const feadAtom4 = "feeds/atom4";
 
 // Create an MQTT client and connect to Adafruit IO
 const client = mqtt.connect(`mqtt://io.adafruit.com`, {
@@ -23,15 +21,16 @@ const client = mqtt.connect(`mqtt://io.adafruit.com`, {
 
 client.on("connect", () => {
   console.log(client.connected);
-  client.subscribe(`${AIO_USERNAME}/feeds/${feedNameLed}`, () => {});
-  client.subscribe(`${AIO_USERNAME}/feeds/${feedNameTemp}`, () => {});
-  client.subscribe(`${AIO_USERNAME}/feeds/${feedNameHum}`, () => {});
-  client.subscribe(`${AIO_USERNAME}/feeds/${feedNameHex}`, () => {});
-  client.subscribe(`${AIO_USERNAME}/feeds/${feedNameRgb}`, () => {});
-  client.subscribe(`${AIO_USERNAME}/feeds/${feedNameAss}`, () => {});
-  client.subscribe(`${AIO_USERNAME}/feeds/${feedNameFan}`, () => {});
+  client.subscribe(`${AIO_USERNAME}/feeds/${feedName}`, () => {});
+  client.subscribe(`${AIO_USERNAME}/feeds/${feadAtom}`, () => {});
+  client.subscribe(`${AIO_USERNAME}/feeds/${feadAtom2}`, () => {});
+  client.subscribe(`${AIO_USERNAME}/feeds/${feadAtom3}`, () => {});
+  client.subscribe(`${AIO_USERNAME}/feeds/${feadAtom4}`, () => {});
 });
 // Receive data from a feed
+client.on("message", (topic, message) => {
+  console.log(`Received data from ${topic}: ${message}`);
+});
 
 app.use(function (req, res, next) {
   // Website you wish to allow to connect
@@ -51,40 +50,6 @@ app.use(function (req, res, next) {
   next();
 });
 
-app.use("/face", (req, res) => {
-  const pythonProcess = spawn("python", ["faceDetect.py"]);
-
-  pythonProcess.stdout.on("data", (data) => {
-    console.log(`stdout: ${data}`);
-  });
-
-  pythonProcess.stderr.on("data", (data) => {
-    console.error(`stderr: ${data}`);
-  });
-
-  pythonProcess.on("close", (code) => {
-    console.log(`child process exited with code ${code}`);
-    res.send(`Python script exited with code ${code}`);
-  });
-});
-
-app.use("/voice", (req, res) => {
-  const pythonProcess = spawn("python", ["voiceDetect.py"]);
-
-  pythonProcess.stdout.on("data", (data) => {
-    console.log(`stdout: ${data}`);
-  });
-
-  pythonProcess.stderr.on("data", (data) => {
-    console.error(`stderr: ${data}`);
-  });
-
-  pythonProcess.on("close", (code) => {
-    console.log(`child process exited with code ${code}`);
-    res.send(`Python script exited with code ${code}`);
-  });
-});
-
 const server = app.listen(3001, () => {
   console.log("listen on port 3001!!!!");
 });
@@ -92,26 +57,43 @@ const server = app.listen(3001, () => {
 const io = require("socket.io")(server, { cors: { origin: "*" } });
 
 io.on("connection", (socket) => {
+  socket.emit("data", { message: "Welcome to the server!" });
   client.on("message", (topic, message) => {
     console.log(`Received data from ${topic}: ${message}`);
-    if (topic === "ntr18/feeds/bbc-hex") socket.emit("hex", message.toString());
-    if (topic === "ntr18/feeds/bbc-hum") socket.emit("hum", message.toString());
-    if (topic === "ntr18/feeds/bbc-temp") socket.emit("temp", message.toString());
-    if (topic === "ntr18/feeds/bbc-ass") socket.emit("ass", message.toString());
+    if (topic === `${AIO_USERNAME}/feeds/${feedName}`) socket.emit("topic", { message: `${message.toString()}` });
+    if (topic === `${AIO_USERNAME}/feeds/${feadAtom}`) socket.emit("atom", { message: `Received data from ${topic}: ${message.toString()}` });
+    if (topic === `${AIO_USERNAME}/feeds/${feadAtom2}`) socket.emit("atom2", { message: `Received data from ${topic}: ${message.toString()}` });
+    if (topic === `${AIO_USERNAME}/feeds/${feadAtom3}`) socket.emit("atom3", { message: `Received data from ${topic}: ${message.toString()}` });
+    if (topic === `${AIO_USERNAME}/feeds/${feadAtom4}`) socket.emit("atom4", { message: `Received data from ${topic}: ${message.toString()}` });
   });
 
-  socket.on("light-on", (data) => {
+  socket.on("atom", (data) => {
     console.log(data);
-    client.publish(`${AIO_USERNAME}/feeds/${feedNameLed}`, data ? "1" : "0");
+    client.publish(`${AIO_USERNAME}/${feadAtom}`, data === "1" ? "1" : "2");
   });
 
-  socket.on("fan", (data) => {
+  socket.on("atom2", (data) => {
     console.log(data);
-    client.publish(`${AIO_USERNAME}/feeds/${feedNameFan}`, data.toString());
+    client.publish(`${AIO_USERNAME}/${feadAtom2}`, data === "1" ? "1" : "2");
   });
 
-  socket.on("rgb", (data) => {
+  socket.on("atom3", (data) => {
     console.log(data);
-    client.publish(`${AIO_USERNAME}/feeds/${feedNameRgb}`, data === "Green" ? "#00ff00" : data === "Red" ? "#FF0000" : "#0084FF");
+    client.publish(`${AIO_USERNAME}/${feadAtom3}`, data === "1" ? "1" : "2");
   });
+
+  socket.on("atom4", (data) => {
+    console.log(data);
+    client.publish(`${AIO_USERNAME}/${feadAtom4}`, data === "1" ? "1" : "2");
+  });
+
+  // socket.on("fan", (data) => {
+  //   console.log(data);
+  //   client.publish(`${AIO_USERNAME}/${feedNameFan}`, data.toString());
+  // });
+
+  // socket.on("rgb", (data) => {
+  //   console.log(data);
+  //   client.publish(`${AIO_USERNAME}/feeds/${feedNameRgb}`, data === "Green" ? "#00ff00" : data === "Red" ? "#FF0000" : "#0084FF");
+  // });
 });
